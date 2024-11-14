@@ -163,3 +163,63 @@ export async function GET (request:NextRequest){
         )
     }
  }
+
+ export async function DELETE (request:NextRequest){
+    try{
+        await connectDB();
+        const url = new URL(request.url);
+        const id = url.searchParams.get("id");
+        if(!id){
+            return NextResponse.json(
+                {
+                    success: false,
+                    status: 400,
+                    message: "Id is required",
+                    timestamp: new Date().getTime(),
+                    path: "api/users",
+                    method: "DELETE"
+                }, {status: 400}
+            )
+        }
+        const user = await User.findByIdAndDelete(id);
+
+        if(!user){
+            return NextResponse.json(
+                {
+                    succcess: false,
+                    status: 404,
+                    message: "User not found",
+                    data: null,
+                    timestamp: new Date().getTime(),
+                    path: `/api/users/?id=${id}`,
+                    method: "DELETE"
+                }, {status: 404}
+            )
+        }
+
+        return NextResponse.json(
+            {
+                success: true,
+                status: 200,
+                message: "User deleted",
+                data: null,
+                timestamp: new Date().getTime(),
+                path: `/api/users/?id=${id}`,
+                method: "DELETE"
+            }, {status: 200}
+        )
+
+    }catch(error){
+        return NextResponse.json(
+            {
+                sucess: false,
+                status: 500,
+                message: "Error deleting user",
+                timestamp: new Date().getTime(),
+                error: error instanceof Error ? error.message : "Error in server",
+                path: "api/users",
+                method: "DELETE"
+            }, {status: 500}
+        )
+    }
+ }
