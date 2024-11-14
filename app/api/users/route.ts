@@ -1,7 +1,9 @@
 import { connectDB } from "@/libs/mongoDB";
 import User from "@/models/user"
 import { time } from "console";
+import next from "next";
 import { NextResponse, NextRequest } from "next/server";
+import path from "path";
 
 
 export async function GET (request:NextRequest){
@@ -62,6 +64,37 @@ export async function GET (request:NextRequest){
                 path: "api/users",
                 method: "GET",
             }, {status: 500}
+        )
+    }
+ }
+
+ export async function POST (request:NextRequest){
+    try{
+        await connectDB();
+        const data = await request.json();
+        const user = await User.create(data);
+        return NextResponse.json(
+            {
+                succes: true,
+                status: 201,
+                message: "User created",
+                data: user,
+                timestamp: new Date().getTime(),
+                path: "api/users",
+                method: "POST"
+            }
+        )
+    }catch(error){
+        return NextResponse.json(
+            {
+                succes: true,
+                status: 400,
+                message: "Error creating user",
+                timestamp: new Date().getTime(),
+                error: error instanceof Error ? error.message : "Error in data sent",
+                path: "api/users",
+                method: "POST"
+            }, {status: 400}
         )
     }
  }
