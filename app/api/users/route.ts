@@ -99,4 +99,67 @@ export async function GET (request:NextRequest){
     }
  }
 
- 
+ export async function PUT (request:NextRequest){
+    try{
+        await connectDB();
+        const url = new URL(request.url);
+        const id = url.searchParams.get("id");
+        if(!id){
+            return NextResponse.json(
+                {
+                    succes: false,
+                    status: 400,
+                    message: "Id is required",
+                    timestamp: new Date().getTime(),
+                    path: "api/users",
+                    method: "PUT"
+                }, {status: 400}
+            )
+        }
+
+        const data = await request.json();
+        const user = await User.findByIdAndUpdate(id, data, {
+            new: true,
+            runValidators: true
+        })
+
+        if(!user){
+            return NextResponse.json(
+                {
+                    succes: false,
+                    status: 404,
+                    message: "User not found",
+                    data: null,
+                    timestamp: new Date().getTime(),
+                    path: `/api/users/?id=${id}`,
+                    method: 'PUT'
+                }, {status: 404}
+            )
+        }
+
+        return NextResponse.json(
+            {
+                succes: true,
+                status: 200,
+                message: "User updated",
+                data: user,
+                timestamp: new Date().getTime(),
+                path: `/api/users/?id=${id}`,
+                method: "PUT"
+            }, {status: 200}
+        )
+
+    }catch(error){
+        return NextResponse.json(
+            {
+                succes: true,
+                status: 500,
+                message: "Error updating user",
+                timestamp: new Date().getTime(),
+                error: error instanceof Error ? error.message : "Error in server",
+                path: "api/users",
+                method: "POST"
+            }, {status: 500}
+        )
+    }
+ }
