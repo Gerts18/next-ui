@@ -1,5 +1,6 @@
 import { connectDB } from "@/libs/mongoDB";
 import User from "@/models/user"
+import { time } from "console";
 import { NextResponse, NextRequest } from "next/server";
 
 
@@ -51,6 +52,18 @@ export async function GET (request:NextRequest){
         )
 
     } catch(error){
-
+        return NextResponse.json(
+            {
+                succes: false,
+                status: 500,
+                messsage: "Error in server",
+                error: error instanceof Error ? error.message : "EVERYTHING IS BROKEN",
+                timestamp: new Date().getTime(),
+                path: "api/users",
+                method: "GET",
+            }, {status: 500}
+        )
     }
  }
+
+ 
