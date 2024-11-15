@@ -1,72 +1,62 @@
 import { connectDB } from "@/libs/mongoDB";
 import User from "@/models/user"
-import { time } from "console";
+import { pagination } from "@nextui-org/theme";
+import { time, timeStamp } from "console";
+import { stat } from "fs";
 import next from "next";
 import { NextResponse, NextRequest } from "next/server";
-import path from "path";
+import path, { parse } from "path";
 
 
 export async function GET (request:NextRequest){
     try{
         await connectDB();
-        const url = new URL(request.url);
-        const id = url.searchParams.get("id");
-        if(!id){
-            const users = await User.find();
-            return NextResponse.json( 
-                {
-                    succes:true,
-                    status: 200,
-                    message: "Users found",
-                    data: users,
-                    count: users.length,
-                    timestamp: new Date().getTime(),
-                    path: "api/users",
-                    method: "GET"
-                }, {status: 200}
-            )
-        }
-        const user = await User.findById(id);
-        if(!user){
-            return NextResponse.json(
-                {
-                    succes: false,
-                    status: 404,
-                    message: "User not found",
-                    data: null,
-                    timestamp: new Date().getTime(),
-                    path: `/api/users/?id=${id}`,
-                    method: "GET"
-                }, {status: 404}
-            )
-        }
+        const searchParmams = request.nextUrl.searchParams;
+        const page = parseInt(searchParmams.get("page") || "1");
+        const perPage = parseInt(searchParmams.get("perPage") || "10");
+        const limit = Math.min(perPage, 20);
+        const skip = (page - 1) * limit;   
 
-        return NextResponse.json(
-            {
-                succes: true,
-                status: 200,
-                message: "User obtained",
-                data: user,
-                timestamp: new Date().getTime(),
-                path: `/api/users/?id=${id}`,
-                method: "GET"
-            }, {status: 200}
+        const [users, total] = await Promise.all(
+            [
+                User.find().skip(skip).limit(limit).select("-password"),
+                User.countDocuments()
+            ]
         )
 
-    } catch(error){
         return NextResponse.json(
             {
-                succes: false,
+                success: true,
+                status: 200,
+                data: users,
+                pagination:{
+                    currentPage: page,
+                    totalPage: Math.ceil(total / perPage),
+                    totalItems: total,
+                    itemsPerPage: limit,
+                    hasNextPage: page < Math.ceil(total / limit) ,
+                    hasPrevPage: page > 1
+                },
+                timeStamp: new Date().toISOString(),
+                path: 'api/users',
+                method: 'GET'
+            },{status: 200}
+        )
+
+    }catch (error) {
+        return NextResponse.json(
+            {
+                success: false,
                 status: 500,
-                messsage: "Error in server",
-                error: error instanceof Error ? error.message : "EVERYTHING IS BROKEN",
-                timestamp: new Date().getTime(),
-                path: "api/users",
-                method: "GET",
+                message: "Error fetching users",
+                error: error instanceof Error ? error.message : "Error in server",
+                timeStamp: new Date().getTime(),
+                path: 'api/users',  
+                method: 'GET'
             }, {status: 500}
         )
     }
- }
+}
 
  export async function POST (request:NextRequest){
     try{
