@@ -8,6 +8,8 @@ export interface Student {
     gradeRef : string
 }
 
+
+
 export class StudentValidator {
     static validate(student: Partial<Student>): string[] {
         const errors: string[]=[];
